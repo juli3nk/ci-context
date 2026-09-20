@@ -1,0 +1,28 @@
+name: 'CI Context Detector'
+description: 'Detects the git context and exposes normalized refs'
+
+outputs:
+  base_ref:
+    description: 'Base reference'
+    value: ${{ steps.detect.outputs.base_ref }}
+  head_ref:
+    description: 'HEAD reference'
+    value: ${{ steps.detect.outputs.head_ref }}
+  commit_count:
+    description: 'Number of commits in the change range'
+    value: ${{ steps.detect.outputs.commit_count }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v7
+      with:
+        go-version: '1.26'
+
+    - id: detect
+      run: |
+        cd "${{ github.action_path }}"
+        go run ./cmd/ci-context \
+          --github-output \
+          >> "$GITHUB_OUTPUT"
+      shell: bash
