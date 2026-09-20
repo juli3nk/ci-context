@@ -1,0 +1,18 @@
+version: 2
+
+project_name: ci-context
+
+changelog:
+  disable: true
+
+builds:
+  - main: ./cmd/ci-context
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s
+      - -w
+    goos:
+      - linux
+    goarch:
+      - amd64
