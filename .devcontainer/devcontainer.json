@@ -1,0 +1,21 @@
+{
+  "name": "CI Context",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu26.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "dockerDashComposeVersion": "none"
+    },
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.26"
+    },
+    "ghcr.io/devcontainers-extra/features/asdf-package:1": {
+      "plugin": "dagger",
+      "version": "0.21.9"
+    }
+  },
+  "containerEnv": {
+    "DAGGER_NO_NAG": "1"
+  },
+  "postCreateCommand": "go mod download",
+  "workspaceMount": "type=bind,source=${localWorkspaceFolder},target=${containerWorkspaceFolder}"
+}
