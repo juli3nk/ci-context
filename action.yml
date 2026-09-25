@@ -1,6 +1,18 @@
 name: 'CI Context Detector'
 description: 'Detects the git context and exposes normalized refs'
 
+inputs:
+  base-ref:
+    description: "Forced base reference (optional). When empty, ci-context auto-detects the base."
+    required: false
+    type: string
+    default: ""
+  since:
+    description: "Minimum reference commit; base_ref will never be older than this commit"
+    required: false
+    type: string
+    default: ""
+
 outputs:
   base_ref:
     description: 'Base reference'
@@ -21,8 +33,16 @@ runs:
 
     - id: detect
       run: |
+        args=()
+        if [ "${{ inputs.base-ref }}" != "" ]; then
+          args+=("--base-ref=${{ inputs.base-ref }}")
+        fi
+        if [ "${{ inputs.since }}" != "" ]; then
+          args+=("--since=${{ inputs.since }}")
+        fi
         cd "${{ github.action_path }}"
         go run ./cmd/ci-context \
+          "${args[@]}" \
           --github-output \
           >> "$GITHUB_OUTPUT"
       shell: bash
