@@ -13,6 +13,7 @@ jobs:
     uses: juli3nk/ci-shared/.github/workflows/changes.yaml@main
     with:
       lang_ext: "go"
+      show_env: true
 
   checks:
     needs: changes
