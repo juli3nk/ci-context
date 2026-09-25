@@ -2,6 +2,7 @@ package github
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -24,7 +25,7 @@ func ParseEventPayload() (before string, after string, isForced bool, commitCoun
 		return "", "", false, 0
 	}
 
-	data, err := os.ReadFile(filepath.Clean(eventPath))
+	data, err := readEventFile(eventPath)
 	if err != nil {
 		return "", "", false, 0
 	}
@@ -38,4 +39,16 @@ func ParseEventPayload() (before string, after string, isForced bool, commitCoun
 	isZero := payload.Before == "0000000000000000000000000000000000000000"
 
 	return payload.Before, payload.After, payload.Forced || isZero, len(payload.Commits)
+}
+
+func readEventFile(path string) ([]byte, error) {
+	if path == "" {
+		return nil, fmt.Errorf("event path is empty")
+	}
+	path = filepath.Clean(path)
+	if !filepath.IsAbs(path) {
+		return nil, fmt.Errorf("event path must be absolute: %s", path)
+	}
+	//nolint:gosec // G703: GITHUB_EVENT_PATH is set by GitHub Actions; path is validated as absolute.
+	return os.ReadFile(path)
 }
