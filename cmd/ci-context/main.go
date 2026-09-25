@@ -11,6 +11,7 @@ import (
 func main() {
 	var (
 		baseRef      = flag.String("base-ref", "", "Base ref for PRs")
+		since        = flag.String("since", "", "Minimum reference commit; base will never be older than this")
 		githubOutput = flag.Bool("github-output", false, "Output in GITHUB_OUTPUT format")
 		debug        = flag.Bool("debug", false, "Display debug mode")
 	)
@@ -24,7 +25,7 @@ func main() {
 		return
 	}
 
-	refs, err := ci.GetRefs(*baseRef)
+	refs, err := ci.GetRefs(*baseRef, *since)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ci-detect error: %v\n", err)
 		os.Exit(1)

@@ -198,3 +198,41 @@ func gitRun(args ...string) error {
 func gitOutput(args ...string) ([]byte, error) {
 	return exec.Command("git", args...).Output() //nolint:gosec // arguments validated
 }
+
+// isAncestor reports whether ancestor is an ancestor (or equal to) of ref.
+func isAncestor(ancestor, ref string) bool {
+	if !isValidRef(ancestor) || !isValidRef(ref) {
+		return false
+	}
+	// git merge-base --is-ancestor exits 0 if ancestor is indeed an ancestor.
+	err := gitRun("merge-base", "--is-ancestor", ancestor, ref)
+	return err == nil
+}
+
+// clampBase returns a base reference that is never older than since.
+// If since is empty, base is returned unchanged.
+// If since is not an ancestor of head, an error is returned.
+func clampBase(base, head, since string) (string, error) {
+	if since == "" {
+		return base, nil
+	}
+	if !isResolvable(since) {
+		return "", fmt.Errorf("--since ref %q does not resolve to a commit", since)
+	}
+	if !isResolvable(head) {
+		return "", fmt.Errorf("head ref %q does not resolve to a commit", head)
+	}
+	if !isAncestor(since, head) {
+		return "", fmt.Errorf("--since ref %q is not an ancestor of head %q", since, head)
+	}
+	// If base is empty or the empty tree, use since.
+	if base == "" || base == EmptyTreeSHA {
+		return since, nil
+	}
+	// If since is an ancestor of base (or equal), base is already as recent or newer.
+	if isAncestor(since, base) {
+		return base, nil
+	}
+	// Otherwise base is older than since (or unrelated); clamp to since.
+	return since, nil
+}

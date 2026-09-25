@@ -12,13 +12,21 @@ type Refs struct {
 }
 
 // GetRefs detects the scope of the change.
-func GetRefs(base string) (*Refs, error) {
+// If since is provided, it acts as a floor: the returned BaseRef will never be
+// older than since. If since is not an ancestor of head, an error is returned.
+func GetRefs(base, since string) (*Refs, error) {
 	// Manual override
 	if base != "" {
+		baseRef := resolveBase(base)
+		headRef := "HEAD"
+		baseRef, err := clampBase(baseRef, headRef, since)
+		if err != nil {
+			return nil, err
+		}
 		return &Refs{
-			BaseRef:     resolveBase(base),
-			HeadRef:     "HEAD",
-			CommitCount: countRefs(resolveBase(base), "HEAD"),
+			BaseRef:     baseRef,
+			HeadRef:     headRef,
+			CommitCount: countRefs(baseRef, headRef),
 		}, nil
 	}
 
@@ -29,24 +37,46 @@ func GetRefs(base string) (*Refs, error) {
 	if headRef == "" {
 		headRef = "HEAD"
 	}
-	commitCount := max(ci.CommitCount, countRefs(baseRef, headRef))
 
 	switch ci.Host {
 	case HostGitHub:
-		if ci.IsPR {
+		if ci.IsPR || ci.IsForcePush {
+			baseRef, err := clampBase(baseRef, headRef, since)
+			if err != nil {
+				return nil, err
+			}
+			commitCount := max(ci.CommitCount, countRefs(baseRef, headRef))
 			return &Refs{BaseRef: baseRef, HeadRef: headRef, CommitCount: commitCount}, nil
-		} else if ci.IsForcePush {
-			return &Refs{BaseRef: baseRef, HeadRef: headRef, CommitCount: commitCount}, nil
-		} else {
-			return &Refs{BaseRef: resolveBase(ci.BeforeSHA), HeadRef: ci.AfterSHA, CommitCount: max(ci.CommitCount, countRefs(resolveBase(ci.BeforeSHA), ci.AfterSHA))}, nil
 		}
+		baseRef = resolveBase(ci.BeforeSHA)
+		baseRef, err := clampBase(baseRef, ci.AfterSHA, since)
+		if err != nil {
+			return nil, err
+		}
+		commitCount := max(ci.CommitCount, countRefs(baseRef, ci.AfterSHA))
+		return &Refs{BaseRef: baseRef, HeadRef: ci.AfterSHA, CommitCount: commitCount}, nil
 	case HostGitLab:
 		if ci.IsPR {
+			baseRef, err := clampBase(baseRef, headRef, since)
+			if err != nil {
+				return nil, err
+			}
+			commitCount := max(ci.CommitCount, countRefs(baseRef, headRef))
 			return &Refs{BaseRef: baseRef, HeadRef: headRef, CommitCount: commitCount}, nil
-		} else {
-			return &Refs{BaseRef: resolveBase(ci.BeforeSHA), HeadRef: ci.AfterSHA, CommitCount: max(ci.CommitCount, countRefs(resolveBase(ci.BeforeSHA), ci.AfterSHA))}, nil
 		}
+		baseRef = resolveBase(ci.BeforeSHA)
+		baseRef, err := clampBase(baseRef, ci.AfterSHA, since)
+		if err != nil {
+			return nil, err
+		}
+		commitCount := max(ci.CommitCount, countRefs(baseRef, ci.AfterSHA))
+		return &Refs{BaseRef: baseRef, HeadRef: ci.AfterSHA, CommitCount: commitCount}, nil
 	default:
+		baseRef, err := clampBase(baseRef, headRef, since)
+		if err != nil {
+			return nil, err
+		}
+		commitCount := max(ci.CommitCount, countRefs(baseRef, headRef))
 		return &Refs{BaseRef: baseRef, HeadRef: headRef, CommitCount: commitCount}, nil
 	}
 }
