@@ -96,7 +96,7 @@ run = "dagger call go --version=$GO_VERSION licenses"
 
 [tasks.build]
 description = "Build project artifacts using GoReleaser"
-run = "dagger call goreleaser build --snapshot directory --path=./dist export --path=./dist"
+run = "dagger call goreleaser build --snapshot --clean directory --path=./dist export --path=./dist"
 
 [tasks.lint]
 description = "Run all source and configuration linters"
