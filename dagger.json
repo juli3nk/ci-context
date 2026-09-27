@@ -1,5 +1,5 @@
 {
-  "name": "git-bootstrap-cli",
+  "name": "ci-context",
   "engineVersion": "v0.21.9",
   "toolchains": [
     {
