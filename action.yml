@@ -2,7 +2,7 @@ name: 'CI Context Detector'
 description: 'Detects the git context and exposes normalized refs'
 
 inputs:
-  base-ref:
+  base_ref:
     description: "Forced base reference (optional). When empty, ci-context auto-detects the base."
     required: false
     type: string
@@ -34,8 +34,8 @@ runs:
     - id: detect
       run: |
         args=()
-        if [ "${{ inputs.base-ref }}" != "" ]; then
-          args+=("--base-ref=${{ inputs.base-ref }}")
+        if [ "${{ inputs.base_ref }}" != "" ]; then
+          args+=("--base-ref=${{ inputs.base_ref }}")
         fi
         if [ "${{ inputs.since }}" != "" ]; then
           args+=("--since=${{ inputs.since }}")
